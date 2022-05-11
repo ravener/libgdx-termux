@@ -9,7 +9,7 @@ This is a simple game written in Java using libGDX for Android with the intentio
 ## Getting Started
 The first step is to install a few tools we are gonna need
 ```sh
-$ pkg install git ecj dx apksigner aapt
+$ pkg install git ecj dx apksigner aapt openjdk-17
 ```
 Then clone this repository
 ```sh

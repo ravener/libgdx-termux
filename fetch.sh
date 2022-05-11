@@ -48,7 +48,6 @@ wget "$URL/x86/libgdx.so" -O lib/x86/libgdx.so
 
 # Additional gdx tools. (Optional)
 # Can be used from programs but it can also be invoked on the cli
-# Install openjdk-17 to make full use of this jar file's cli
 # Includes some critical tools like the texture packer.
 # wget "$URL/extensions/gdx-tools/gdx-tools.jar" -O libs/gdx-tools.jar
 
