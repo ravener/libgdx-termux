@@ -9,20 +9,19 @@ This is a simple game written in Java using libGDX for Android with the intentio
 ## Getting Started
 The first step is to install a few tools we are gonna need
 ```sh
-$ pkg install git ecj dx apksigner aapt openjdk-17
+$ pkg install git ecj dx apksigner aapt unzip openjdk-17
 ```
 Then clone this repository
 ```sh
 $ git clone https://github.com/ravener/libgdx-termux
 $ cd libgdx-termux
 ```
-First we need to fetch the gdx libraries, this only needs to be done once or whenever you want to update them.
+First we need to fetch the gdx libraries, this only needs to be done once:
 ```sh
 $ ./fetch.sh
 ```
-> **Note:** The script fetches the latest **nightlies**
 
-There are a few more tools you can use with libgdx, e.g box2d those are optional but you can edit the script and uncomment those lines if you desire those libraries for your project.
+There are a few more tools you can use with libgdx (e.g Box2D) those are optional but you can edit the script and uncomment those lines if you desire those libraries for your project.
 
 Next generate a keystore so we can sign the apk, which is required otherwise Android won't allow us to install the apk.
 ```
@@ -47,9 +46,33 @@ A script has been provided to predex all the jar files for faster compilation, r
 ```sh
 $ ./predex.sh
 ```
-> **Tip:** You should run this again if you ever run `fetch.sh` again to update the libraries.
 
 Now you will see huge improvements in the compile time when using `build.sh`
+
+### Updating
+When updating the gdx libraries start by deleting the lib folders
+```sh
+$ rm -rf lib/ libs/
+```
+> **Note:** If you added your own `.jar` files, take care to backup them or just manually delete the gdx libraries only.
+
+edit `fetch.sh` and bump any versions you want and run `./fetch.sh`
+
+also run `./predex.sh` again for caching the dex files.
+
+## The Notch
+The notch area or also known as the display cutout is supported by default in this template, the game will be full screen to cover the notch area.
+
+This is meant to give you a starter on how to do it but you may not want it for your game, for example if you are heavily relying on the screen borders, on some phones with rounded edges the corners can hide some parts of what you render.
+
+If you would like to disable it and let android render your screen below the notch area simply remove the `res/values-v28/styles.xml` file.
+
+## The Exception Handler
+The template comes with an `ExceptionHandler.java` which is applied in `AndroidLauncher.java` it replaces the default uncaught exception handler to redirect the error to a text file within `/sdcard` this allows you to easily go to your file manager and open the log file to read the crash if you don't have access to a computer to view logcat.
+
+Please note that in order for this to work, storage permissions are required.
+
+Starting from Android 6+ apps must request storage permissions via a dialog which has not been implemented here because it's just an example debugging tool and not really meant to be published in the end. So you will need to go to the app's settings and manually grant the `Storage` permission to make use of this.
 
 ## Moving Forward
 This project is supposed to act like a starter template to get you running quickly, now it's up to you what you do with it, add more libraries, assets, resources and get creative.
@@ -58,5 +81,18 @@ The scripts are fully commented to help you modify it as you see fit.
 
 Feel free to contribute any useful changes to the scripts or the project layout.
 
+### TODO
+Some additional things I'd like to work on:
+
+- [ ] Desktop support. Create `.jar` files runnable on desktop too.
+- [ ] Ant file. Allow the option for users to use `ant` if they wish
+
 ## Credits
 Game is based on the [example from libGDX wiki](https://libgdx.com/wiki/start/a-simple-game) and I do not own the assets provided.
+
+Assets credits:
+
+  * water drop sound by junggle, see <http://www.freesound.org/people/junggle/sounds/30341/>
+  * rain by acclivity, see <http://www.freesound.org/people/acclivity/sounds/28283/>
+  * droplet sprite by mvdv, see <https://www.box.com/s/peqrdkwjl6guhpm48nit>
+  * bucket sprite by mvdv, see <https://www.box.com/s/605bvdlwuqubtutbyf4x>

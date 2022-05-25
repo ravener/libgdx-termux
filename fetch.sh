@@ -1,81 +1,121 @@
 #!/data/data/com.termux/files/usr/bin/bash
 
-# Jar dependencies
-if [ ! -d "./libs" ]; then
-  echo "Created ./libs"
-  mkdir ./libs
-fi
+mkdir -p libs lib
 
-# Native .so libraries to be packed in the APK
-if [ ! -d "./lib" ]; then
-  mkdir ./lib/
-  mkdir ./lib/arm64-v8a
-  mkdir ./lib/armeabi
-  mkdir ./lib/armeabi-v7a
-  mkdir ./lib/x86
-  mkdir ./lib/x86_64
+# Base Download URL
+URL="https://repo1.maven.org/maven2/com/badlogicgames/gdx"
 
-  echo "Created ./lib/{arm64-v8a,armeabi,armeabi-v7a,x86,x86_64}"
-fi
+# Versions (modify as needed)
+#
+# Note: some older gdx versions around 1.9 uses androidx
+# which makes dependency resolution more complicated
+# It is recommended to use newer versions which is lighter.
+#
+# Note: I assume box2d, bullet & freetype always have the same version
+# as the base libgdx, they probably get updated at the same time
+# or so it seems, so I use GDX_VERSION for them rather than
+# defining BOX2D_VERSION etc. But correct me if I'm wrong.
+GDX_VERSION="1.11.0" # gdx
+JNIGEN_VERSION="2.3.1" # gdx-jnigen-loader
+AI_VERSION="1.8.2" # gdx-ai
+CONTROLLERS_VERSION="1.9.13" # gdx-controllers
 
-# Base URL where the nightlies distribution is located.
-URL="https://libgdx.badlogicgames.com/ci/nightlies/dist"
-echo "Base URL: $URL"
+# Fetch a .jar file and place it in libs/
+function fetch() {
+  TARGET="$URL/$1/$2/$1-$2.jar"
+  echo -e "Downloading: \x1b[33m$1-$2.jar\x1b[0m"
+  wget -nc $TARGET -O "libs/$1-$2.jar"
+}
 
-# Base libGDX jar file.
-echo "Fetching gdx.jar"
-wget "$URL/gdx.jar" -O libs/gdx.jar
+# Native files are distributed inside a .jar file
+# We need to extract the .so files out of it and place it
+# in our corresponding lib/ folder for use in android.
+function native() {
+  echo -e "Downloading: \x1b[33m$1-platform-$2-natives-$3.jar\x1b[0m"
+
+  # Make sure the folder for the architecture exists.
+  mkdir -p "lib/$3"
+
+  # Temporary folder to store the .jar.
+  # Make sure .temp doesn't exist, we need it to be clean.
+  rm -rf .temp
+  mkdir .temp
+
+  # Download the file
+  wget "$URL/$1-platform/$2/$1-platform-$2-natives-$3.jar" -O .temp/lib.jar
+
+  # Unzip the jar inside the temporary directory.
+  unzip -d .temp .temp/lib.jar
+
+  # Move the .so file into the lib folder within the
+  # corresponding architecture's folder
+  mv .temp/*.so "lib/$3"
+
+  # Delete the temporary directory
+  rm -rf .temp
+}
+
+### ---------- Definitions ---------- ###
+# All libraries are declared below.
+#
+# Feel free to remove any architectures you don't want to support
+# For example phones normally don't have x86/64 and they are mostly
+# used in emulators, you may remove them to save some space.
+# arm64 devices can also run armeabi-v7a so that architecture
+# should be the bare minimum you need to support.
+#
+# Simply comment or remove the lines you don't want.
+# You can change the versions with the variables on top of the file.
+
+# Base libGDX jar
+fetch "gdx" $GDX_VERSION
+
+# native libraries.
+native "gdx" $GDX_VERSION "armeabi-v7a"
+native "gdx" $GDX_VERSION "arm64-v8a"
+native "gdx" $GDX_VERSION "x86_64"
+native "gdx" $GDX_VERSION "x86"
+
+# jnigen-loader (Required to load the native .so files)
+fetch "gdx-jnigen-loader" $JNIGEN_VERSION
 
 # Android backend
-echo "Fetching gdx-backend-android.jar"
-wget "$URL/gdx-backend-android.jar" -O libs/gdx-backend-android.jar
+fetch "gdx-backend-android" $GDX_VERSION
 
-# Native libraries for all architectures
-wget "$URL/arm64-v8a/libgdx.so" -O lib/arm64-v8a/libgdx.so
-wget "$URL/armeabi-v7a/libgdx.so" -O lib/armeabi-v7a/libgdx.so
-wget "$URL/armeabi/libgdx.so" -O lib/armeabi/libgdx.so
+### ----- Optional Dependencies ----- ###
+# From here on, the dependencies are commented out by default.
+# Uncomment them by removing the single '#' characters
+# if you would like to use them in your project.
 
-# Hint: x86 libraries are 99% of times not needed
-# Unless you want to run it in an emulator or something
-# So you may wish to comment this to save some apk size
-# Though it won't make a huge difference.
-wget "$URL/x86_64/libgdx.so" -O lib/x86_64/libgdx.so
-wget "$URL/x86/libgdx.so" -O lib/x86/libgdx.so
+### --- gdx-ai --- ###
+# fetch "gdx-ai" $AI_VERSION
 
-# Optional extension libraries
-# Commented out by default and not required by the sample code
-# But you may wish to add this libraries for your own use.
+### --- Box2D Physics --- ###
+# fetch "gdx-box2d" $GDX_VERSION
+#
+# native "gdx-box2d" $GDX_VERSION "armeabi-v7a"
+# native "gdx-box2d" $GDX_VERSION "arm64-v8a"
+# native "gdx-box2d" $GDX_VERSION "x86_64"
+# native "gdx-box2d" $GDX_VERSION "x86"
 
-# Additional gdx tools. (Optional)
-# Can be used from programs but it can also be invoked on the cli
-# Includes some critical tools like the texture packer.
-# wget "$URL/extensions/gdx-tools/gdx-tools.jar" -O libs/gdx-tools.jar
+### --- gdx-controllers --- ###
+# fetch "gdx-controllers" $CONTROLLERS_VERSION
+# fetch "gdx-controllers-android" $CONTROLLERS_VERSION
 
-# Box2D
-# wget "$URL/extensions/gdx-box2d/gdx-box2d.jar" -O libs/gdx-box2d.jar
-# Box2D native libraries
-# wget "$URL/extensions/gdx-box2d/arm64-v8a/libgdx-box2d.so" -O lib/arm64-v8a/libgdx-box2d.so
-# wget "$URL/extensions/gdx-box2d/armeabi/libgdx-box2d.so" -O lib/armeabi/libgdx-box2d.so
-# wget "$URL/extensions/gdx-box2d/armeabi-v7a/libgdx-box2d.so" -O lib/armeabi-v7a/libgdx-box2d.so
-# wget "$URL/extensions/gdx-box2d/x86_64/libgdx-box2d.so" -O lib/x86_64/libgdx-box2d.so
-# wget "$URL/extensions/gdx-box2d/x86/libgdx-box2d.so" -O lib/x86/libgdx-box2d.so
+### --- Bullet 3D Physics --- ###
+# fetch "gdx-bullet" $GDX_VERSION
+#
+# native "gdx-bullet" $GDX_VERSION "armeabi-v7a"
+# native "gdx-bullet" $GDX_VERSION "arm64-v8a"
+# native "gdx-bullet" $GDX_VERSION "x86_64"
+# native "gdx-bullet" $GDX_VERSION "x86"
 
-# Bullet
-# wget "$URL/extensions/gdx-bullet/gdx-box2d.jar" -O libs/gdx-bullet.jar
-# Bullet native libraries
-# wget "$URL/extensions/gdx-bullet/arm64-v8a/libgdx-bullet.so" -O lib/arm64-v8a/libgdx-bullet.so
-# wget "$URL/extensions/gdx-bullet/armeabi/libgdx-bullet.so" -O lib/armeabi/libgdx-bullet.so
-# wget "$URL/extensions/gdx-bullet/armeabi-v7a/libgdx-bullet.so" -O lib/armeabi-v7a/libgdx-bullet.so
-# wget "$URL/extensions/gdx-bullet/x86_64/libgdx-bullet.so" -O lib/x86_64/libgdx-bullet.so
-# wget "$URL/extensions/gdx-bullet/x86/libgdx-bullet.so" -O lib/x86/libgdx-bullet.so
+### --- Freetype --- ###
+# fetch "gdx-freetype" $GDX_VERSION
+#
+# native "gdx-freetype" $GDX_VERSION "armeabi-v7a"
+# native "gdx-freetype" $GDX_VERSION "arm64-v8a"
+# native "gdx-freetype" $GDX_VERSION "x86_64"
+# native "gdx-freetype" $GDX_VERSION "x86"
 
-# Freetype
-# wget "$URL/extensions/gdx-freetype/gdx-freetype.jar" -O libs/gdx-freetype.jar
-# Freetype native libraries
-# wget "$URL/extensions/gdx-freetype/arm64-v8a/libgdx-freetype.so" -O lib/arm64-v8a/libgdx-freetype.so
-# wget "$URL/extensions/gdx-freetype/armeabi/libgdx-freetype.so" -O lib/armeabi/libgdx-freetype.so
-# wget "$URL/extensions/gdx-freetype/armeabi-v7a/libgdx-freetype.so" -O lib/armeabi-v7a/libgdx-freetype.so
-# wget "$URL/extensions/gdx-freetype/x86_64/libgdx-freetype.so" -O lib/x86_64/libgdx-freetype.so
-# wget "$URL/extensions/gdx-freetype/x86/libgdx-freetype.so" -O lib/x86/libgdx-freetype.so
-
-
+# TODO: Potentially support desktop too. Fetch desktop libraries.

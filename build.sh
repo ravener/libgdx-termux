@@ -1,7 +1,11 @@
-#!/data/data/com.termux/files/usr/bin/sh -e
+#!/data/data/com.termux/files/usr/bin/bash
 # Build APK on Termux script by ravener
 # https://github.com/ravener
 now=`date +%Y%m%d%s`
+
+# Some basic colors for logging
+yellow="\x1b[33m"
+reset="\x1b[0m"
 
 # Create some directories
 if [ ! -d "./bin" ]; then
@@ -20,7 +24,7 @@ if [ ! -d "/sdcard/APKs" ]; then
   mkdir /sdcard/APKs
 fi
 
-echo "[aapt] Generating R.java"
+echo -e "$yellow[aapt]$reset Generating R.java"
 # So first we generate R.java which allows us to access our
 # resources from ./res
 aapt package -v -f \
@@ -30,7 +34,7 @@ aapt package -v -f \
              -S res \
              -m
 
-echo "[ecj] Compiling Java classes"
+echo -e "$yellow[ecj]$reset Compiling Java classes"
 
 # Compile all files from src/main/java
 # Output to ./obj
@@ -38,7 +42,7 @@ echo "[ecj] Compiling Java classes"
 ecj -d ./obj -classpath "$HOME/../usr/share/java/android.jar:$(echo libs/*.jar | tr ' ' ':')" \
 	     -sourcepath ./src/main/java $(find src -type f -name "*.java")
 
-echo "[dx] Java classes to .dex"
+echo -e "$yellow[dx]$reset Java classes to .dex"
 
 # We allow an optional optimization here.
 # If libs/dex exists, it contains already dexed jar files
@@ -56,7 +60,7 @@ else
     --output=./bin/game.apk ./obj ./libs/*.jar
 fi
 
-echo "[aapt] Package the apk"
+echo -e "$yellow[aapt]$reset Package the apk"
 # A very important message to script hackers:
 # This could've been run earlier to make the apk then
 # place the dex files into it which is the traditional way
@@ -75,33 +79,17 @@ aapt package -v -f \
 
 
 # Add native libraries.
-# Check if the architecture directory exists then add all .so files
-
-if [ -d "./lib/armeabi" ]; then
-  aapt add -f bin/game.apk lib/armeabi/*.so
-fi
-
-if [ -d "./lib/armeabi-v7a" ]; then
-  aapt add -f bin/game.apk lib/armeabi-v7a/*.so
-fi
-
-if [ -d "./lib/arm64-v8a" ]; then
-  aapt add -f bin/game.apk lib/arm64-v8a/*.so
-fi
-
-if [ -d "./lib/x86_64" ]; then
-  aapt add -f bin/game.apk lib/x86_64/*.so
-fi
-
-if [ -d "./lib/x86" ]; then
-  aapt add -f bin/game.apk lib/x86/*.so
+# Check if the lib directory exists then add all .so files
+if [ -d "./lib" ]; then
+  echo -e "$yellow[aapt]$reset Adding native libraries"
+  aapt add -f bin/game.apk lib/**/*.so
 fi
 
 cd bin
-echo "[zipalign] Zip Aligning the APK"
+echo -e "$yellow[zipalign]$reset Zip Aligning the APK"
 zipalign -f -v 4 game.apk game.aligned.apk
 
-echo "Sign step2.apk"
+echo -e "$yellow[apksigner]$reset Signing the APK"
 apksigner sign --ks ../game.keystore --ks-pass "pass:android" game.aligned.apk
 
 chmod 644 game.apk
