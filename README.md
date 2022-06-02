@@ -87,6 +87,9 @@ Some additional things I'd like to work on:
 - [ ] Desktop support. Create `.jar` files runnable on desktop too.
 - [ ] Ant file. Allow the option for users to use `ant` if they wish
 
+## Related Resources
+- [Running fbx-conv on Android](https://ravener.vercel.app/posts/running-fbx-conv-on-android)
+
 ## Credits
 Game is based on the [example from libGDX wiki](https://libgdx.com/wiki/start/a-simple-game) and I do not own the assets provided.
 
