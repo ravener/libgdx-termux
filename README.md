@@ -8,15 +8,20 @@ This is a simple game written in Java using libGDX for Android with the intentio
 
 ## Getting Started
 The first step is to install a few tools we are gonna need
+
 ```sh
 $ pkg install git ecj dx apksigner aapt unzip openjdk-17
 ```
+
 Then clone this repository
+
 ```sh
 $ git clone https://github.com/ravener/libgdx-termux
 $ cd libgdx-termux
 ```
+
 First we need to fetch the gdx libraries, this only needs to be done once:
+
 ```sh
 $ ./fetch.sh
 ```
@@ -24,17 +29,21 @@ $ ./fetch.sh
 There are a few more tools you can use with libgdx (e.g Box2D) those are optional but you can edit the script and uncomment those lines if you desire those libraries for your project.
 
 Next generate a keystore so we can sign the apk, which is required otherwise Android won't allow us to install the apk.
+
 ```
 keytool -genkeypair -validity 365 -keystore game.keystore -keyalg RSA -keysize 2048
 ```
+
 Just answer the questions and enter a password and you will be done.
 
 The script assumes the filename to be `game.keystore` and the password to be `android`, edit the `build.sh` script to change as needed.
 
 Now that we have our keystore and all libraries we can proceed to the build:
+
 ```sh
 $ ./build.sh
 ```
+
 This will build the apk and also copy it into `/sdcard/APKs` so you can easily install it from your file manager afterwards.
 
 ### Bonus Optimization
@@ -43,6 +52,7 @@ At first the script compiles the `.jar` files from `./libs` everytime it's invok
 It is possible to optimize this, the script already looks for a special directory called `libs/dex/` which can store cached dex files and if it finds it, it will only include everything from there and ignore the raw jar files.
 
 A script has been provided to predex all the jar files for faster compilation, run that once:
+
 ```sh
 $ ./predex.sh
 ```
@@ -51,9 +61,11 @@ Now you will see huge improvements in the compile time when using `build.sh`
 
 ### Updating
 When updating the gdx libraries start by deleting the lib folders
+
 ```sh
 $ rm -rf lib/ libs/
 ```
+
 > **Note:** If you added your own `.jar` files, take care to backup them or just manually delete the gdx libraries only.
 
 edit `fetch.sh` and bump any versions you want and run `./fetch.sh`
